@@ -1,0 +1,392 @@
+.stats-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Filters */
+.stats-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  flex: 1;
+  min-width: 80px;
+  padding: 0.6rem 1rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.filter-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.filter-btn.active {
+  background: var(--accent-focus);
+  color: #fff;
+  border-color: var(--accent-focus);
+}
+
+/* Summary cards */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border-radius: 12px;
+  padding: 1.2rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.focus-card .stat-value {
+  color: var(--accent-focus);
+}
+
+.break-card .stat-value {
+  color: var(--accent-break);
+}
+
+.sessions-card .stat-value {
+  color: var(--warning);
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* History sections */
+.stats-tags-section,
+.stats-history-section {
+  margin-bottom: 2rem;
+}
+
+.stats-history-section h3 {
+  font-size: 1.1rem;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stats-history-section:first-of-type h3 {
+  border-bottom-color: var(--accent-focus);
+}
+
+.stats-history-section:last-of-type h3 {
+  border-bottom-color: var(--accent-break);
+}
+
+.tags-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.tag-chart-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.tag-chart-name {
+  min-width: 100px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-chart-bar-wrapper {
+  flex: 1;
+  height: 24px;
+  background: var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.tag-chart-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-focus), #ff6b6b);
+  border-radius: 12px;
+  transition: width 0.5s ease;
+  min-width: 2px;
+}
+
+.tag-chart-time {
+  min-width: 60px;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.empty-state-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.3;
+}
+
+/* History list */
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-card);
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.history-type {
+  width: 8px;
+  height: 30px;
+  border-radius: 4px;
+}
+
+.history-type.focus {
+  background: var(--accent-focus);
+}
+
+.history-type.break {
+  background: var(--accent-break);
+}
+
+.history-info {
+  flex: 1;
+}
+
+.history-duration {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.history-date {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.history-tags {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.history-tag {
+  padding: 0.15rem 0.5rem;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+/* Responsive */
+@media (max-width: 500px) {
+  .stats-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+  }
+
+  .stat-value {
+    font-size: 1.2rem;
+    margin-bottom: 0;
+  }
+
+  .tag-chart-name {
+    min-width: 70px;
+    font-size: 0.8rem;
+  }
+}
+
+/* Edit button on history items */
+.history-edit-btn {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.history-edit-btn:hover {
+  background: var(--accent-focus);
+  color: #fff;
+  border-color: var(--accent-focus);
+}
+
+/* Edit modal */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+.edit-modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.edit-modal-title {
+  font-size: 1.2rem;
+  color: var(--text-primary);
+  margin-bottom: 1.2rem;
+}
+
+.edit-modal-field {
+  margin-bottom: 1rem;
+}
+
+.edit-modal-field label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.4rem;
+}
+
+.edit-modal-field .settings-input {
+  width: 100%;
+}
+
+.edit-tags-input-wrapper {
+  position: relative;
+}
+
+.edit-tags-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-top: 4px;
+  display: none;
+  z-index: 1001;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.edit-tags-suggestions.visible {
+  display: block;
+}
+
+.edit-tags-suggestions .suggestion-item {
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.edit-tags-suggestions .suggestion-item:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.edit-tags-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}
+
+.edit-modal-actions {
+  display: flex;
+  gap: 0.8rem;
+  justify-content: flex-end;
+  margin-top: 1.2rem;
+}
+
+.edit-modal-btn {
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-modal-btn.cancel {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.edit-modal-btn.cancel:hover {
+  background: var(--border-color);
+}
+
+.edit-modal-btn.save {
+  background: var(--accent-focus);
+  color: #fff;
+}
+
+.edit-modal-btn.save:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px var(--accent-focus-glow);
+}

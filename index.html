@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pomodoro Timer</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/timer.css">
+  <link rel="stylesheet" href="css/settings.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+  <header class="app-header">
+    <h1 class="app-title">Pomodoro</h1>
+    <nav class="app-nav">
+      <button class="nav-btn active" data-view="timer">Timer</button>
+      <button class="nav-btn" data-view="stats">Estatísticas</button>
+      <button class="nav-btn" data-view="settings">Configurações</button>
+    </nav>
+    <button class="theme-toggle" id="themeToggle" title="Alternar tema">
+      <span class="icon-sun">☀</span>
+      <span class="icon-moon">☾</span>
+    </button>
+  </header>
+
+  <main class="app-main">
+    <!-- TIMER VIEW -->
+    <section id="view-timer" class="view active">
+      <div class="timer-container">
+        <div class="session-indicator">
+          <span id="sessionTypeLabel" class="session-type focus">Foco</span>
+          <span id="sessionCount" class="session-count">1 / 4</span>
+        </div>
+
+        <div class="timer-circle-wrapper">
+          <svg class="timer-svg" viewBox="0 0 200 200">
+            <circle class="timer-bg" cx="100" cy="100" r="90" />
+            <circle class="timer-progress" id="timerProgress" cx="100" cy="100" r="90" />
+          </svg>
+          <div class="timer-display">
+            <span id="timerMinutes" class="timer-minutes">25</span>
+            <span class="timer-separator">:</span>
+            <span id="timerSeconds" class="timer-seconds">00</span>
+          </div>
+        </div>
+
+        <div class="timer-controls">
+          <button class="ctrl-btn" id="btnReset" title="Resetar">↺</button>
+          <button class="ctrl-btn primary" id="btnPlayPause" title="Iniciar">▶</button>
+          <button class="ctrl-btn" id="btnSkip" title="Pular"><span id="btnSkipLabel">Pular</span> ⏭</button>
+        </div>
+
+        <div class="time-adjust">
+          <button class="adjust-btn negative" data-minutes="-30">-30</button>
+          <button class="adjust-btn negative" data-minutes="-15">-15</button>
+          <button class="adjust-btn negative" data-minutes="-10">-10</button>
+          <button class="adjust-btn negative" data-minutes="-5">-5</button>
+          <button class="adjust-btn positive" data-minutes="5">+5</button>
+          <button class="adjust-btn positive" data-minutes="10">+10</button>
+          <button class="adjust-btn positive" data-minutes="15">+15</button>
+          <button class="adjust-btn positive" data-minutes="30">+30</button>
+          <div class="adjust-custom">
+            <button class="adjust-btn custom" id="btnCustomAdjust" title="Valor personalizado">⚙</button>
+            <input type="number" id="customAdjustInput" class="custom-adjust-input" placeholder="min" style="display:none">
+          </div>
+        </div>
+
+        <button class="stop-sound-btn" id="btnStopSound" title="Parar som" style="display:none">🔇 Parar Som</button>
+
+        <div class="transition-toggle">
+          <span class="transition-label">Transição:</span>
+          <label class="toggle-switch small">
+            <input type="checkbox" id="timerAutoTransition" checked>
+            <span class="toggle-slider"></span>
+          </label>
+          <span class="transition-mode" id="transitionModeLabel">Automática</span>
+        </div>
+
+        <div class="tags-section">
+          <div class="tags-input-row">
+            <div class="tags-input-wrapper">
+              <input type="text" id="tagInput" class="tag-input" placeholder="Adicionar tag..." autocomplete="off">
+              <div class="tags-suggestions" id="tagsSuggestions"></div>
+            </div>
+            <button class="end-tag-btn" id="btnEndTag" style="display:none" title="Encerrar segmento de tag">✓ Encerrar</button>
+          </div>
+          <div class="tags-list" id="currentTags"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- STATS VIEW -->
+    <section id="view-stats" class="view">
+      <div class="stats-container">
+        <div class="stats-filters">
+          <button class="filter-btn active" data-period="today">Hoje</button>
+          <button class="filter-btn" data-period="week">Semana</button>
+          <button class="filter-btn" data-period="month">Mês</button>
+          <button class="filter-btn" data-period="all">Tudo</button>
+        </div>
+
+        <div class="stats-summary">
+          <div class="stat-card focus-card">
+            <span class="stat-value" id="statFocusTime">0h 0m</span>
+            <span class="stat-label">Tempo de Foco</span>
+          </div>
+          <div class="stat-card break-card">
+            <span class="stat-value" id="statBreakTime">0h 0m</span>
+            <span class="stat-label">Tempo de Pausa</span>
+          </div>
+          <div class="stat-card sessions-card">
+            <span class="stat-value" id="statSessionsCount">0</span>
+            <span class="stat-label">Sessões Completas</span>
+          </div>
+        </div>
+
+        <div class="stats-tags-section">
+          <h3>Tempo por Tag</h3>
+          <div class="tags-chart" id="tagsChart"></div>
+        </div>
+
+        <div class="stats-history-section">
+          <h3>Horas Ativas</h3>
+          <div class="history-list" id="historyFocusList"></div>
+        </div>
+
+        <div class="stats-history-section">
+          <h3>Horas de Descanso</h3>
+          <div class="history-list" id="historyBreakList"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SETTINGS VIEW -->
+    <section id="view-settings" class="view">
+      <div class="settings-container">
+        <h2>Configurações</h2>
+
+        <div class="settings-group">
+          <label class="settings-label">Duração do Foco (minutos)</label>
+          <input type="number" id="settingFocus" class="settings-input" min="1" max="120" value="25">
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Pausa Curta (minutos)</label>
+          <input type="number" id="settingShortBreak" class="settings-input" min="1" max="60" value="5">
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Pausa Longa (minutos)</label>
+          <input type="number" id="settingLongBreak" class="settings-input" min="1" max="60" value="15">
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Sessões antes da Pausa Longa</label>
+          <input type="number" id="settingSessionsBeforeLong" class="settings-input" min="1" max="10" value="4">
+        </div>
+
+        <div class="settings-group toggle-group">
+          <label class="settings-label">Som de Notificação</label>
+          <label class="toggle-switch">
+            <input type="checkbox" id="settingSoundEnabled" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+
+        <div class="settings-group">
+          <label class="settings-label">Link do YouTube para Alarme (opcional)</label>
+          <input type="text" id="settingYouTubeUrl" class="settings-input" placeholder="https://youtu.be/..." autocomplete="off">
+          <span class="settings-hint">Cole um link de vídeo do YouTube para usar como som de alarme</span>
+        </div>
+
+        <button class="settings-save-btn" id="btnSaveSettings">Salvar Configurações</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="youtubePlayerContainer" style="position:fixed;width:1px;height:1px;top:-9999px;left:-9999px;opacity:0;pointer-events:none;"></div>
+
+  <!-- Edit Session Modal -->
+  <div class="edit-modal-overlay" id="editModal" style="display:none">
+    <div class="edit-modal">
+      <h3 class="edit-modal-title">Editar Sessão</h3>
+      <div class="edit-modal-field">
+        <label>Duração (minutos)</label>
+        <input type="number" id="editSessionDuration" class="settings-input" min="1" max="999">
+      </div>
+      <div class="edit-modal-field">
+        <label>Tags</label>
+        <div class="edit-tags-input-wrapper">
+          <input type="text" id="editTagInput" class="settings-input" placeholder="Adicionar tag..." autocomplete="off">
+          <div class="edit-tags-suggestions" id="editTagsSuggestions"></div>
+        </div>
+        <div class="edit-tags-list" id="editSessionTags"></div>
+      </div>
+      <div class="edit-modal-actions">
+        <button class="edit-modal-btn cancel" id="btnEditCancel">Cancelar</button>
+        <button class="edit-modal-btn save" id="btnEditSave">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="js/firebase-config.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/theme.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/tags.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
