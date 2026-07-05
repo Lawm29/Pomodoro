@@ -72,7 +72,11 @@ const Timer = {
     if (endTagBtn) {
       endTagBtn.addEventListener('click', () => {
         if (typeof Tags !== 'undefined') {
-          Tags.endTag();
+          if (Tags.selectingEndTags) {
+            Tags.confirmEndTag();
+          } else {
+            Tags.endTag();
+          }
         }
       });
     }
@@ -166,13 +170,30 @@ const Timer = {
     }
   },
 
-  endCurrentTag() {
+  endCurrentTag(tagsToKeep) {
     if (!this.activeSegment) return false;
 
     const elapsed = this.getElapsed();
-    this.activeSegment.end = elapsed;
-    this.tagSegments.push(this.activeSegment);
-    this.activeSegment = null;
+    const endedTags = tagsToKeep
+      ? this.activeSegment.tags.filter(t => !tagsToKeep.includes(t))
+      : this.activeSegment.tags.slice();
+
+    if (endedTags.length === 0) return false;
+
+    const endedSegment = {
+      tags: endedTags,
+      start: this.activeSegment.start,
+      end: elapsed
+    };
+    this.tagSegments.push(endedSegment);
+
+    if (tagsToKeep && tagsToKeep.length > 0) {
+      this.activeSegment.tags = tagsToKeep;
+    } else {
+      this.activeSegment = null;
+    }
+
+    this.currentTags = this.activeSegment ? this.activeSegment.tags.slice() : [];
     this.updateEndTagBtn();
     if (typeof Tags !== 'undefined') {
       Tags.renderTags();
@@ -182,7 +203,14 @@ const Timer = {
 
   updateEndTagBtn() {
     const btn = document.getElementById('btnEndTag');
-    if (btn) {
+    if (!btn) return;
+    if (typeof Tags !== 'undefined' && Tags.selectingEndTags) {
+      btn.style.display = 'inline-flex';
+      btn.textContent = `Confirmar (${Tags.selectedEndTags.length})`;
+      btn.classList.add('confirming');
+    } else {
+      btn.textContent = '✓ Encerrar';
+      btn.classList.remove('confirming');
       btn.style.display = (this.activeSegment && this.isRunning) ? 'inline-flex' : 'none';
     }
   },

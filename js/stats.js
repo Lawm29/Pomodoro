@@ -2,6 +2,7 @@ const Stats = {
   currentPeriod: 'today',
   editingSessionId: null,
   editSessionTags: [],
+  editTagSegments: [],
 
   init() {
     this.elements = {
@@ -17,7 +18,10 @@ const Stats = {
       editTagsSuggestions: document.getElementById('editTagsSuggestions'),
       editSessionTags: document.getElementById('editSessionTags'),
       editCancel: document.getElementById('btnEditCancel'),
-      editSave: document.getElementById('btnEditSave')
+      editSave: document.getElementById('btnEditSave'),
+      editSegmentsField: document.getElementById('editSegmentsField'),
+      editSegmentsList: document.getElementById('editSegmentsList'),
+      btnAddSegment: document.getElementById('btnAddSegment')
     };
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -48,6 +52,12 @@ const Stats = {
           this.elements.editTagInput.value = '';
         }
       }
+    });
+
+    // Add segment button
+    this.elements.btnAddSegment.addEventListener('click', () => {
+      this.editTagSegments.push({ tags: [], duration: 0 });
+      this.renderEditSegments();
     });
   },
 
@@ -165,7 +175,7 @@ const Stats = {
           <div class="history-date">${dateStr} ${timeStr}</div>
         </div>
         <div class="history-tags">${tagsHtml}</div>
-        <button class="history-edit-btn" data-id="${s.id}" data-duration="${s.duration}" data-tags='${JSON.stringify(s.tags || [])}' title="Editar">✏</button>
+        <button class="history-edit-btn" data-id="${s.id}" data-duration="${s.duration}" data-tags='${JSON.stringify(s.tags || [])}' data-segments='${JSON.stringify(s.tagSegments || [])}' title="Editar">✏</button>
       </div>`;
   },
 
@@ -175,19 +185,30 @@ const Stats = {
         this.openEditModal(
           btn.dataset.id,
           parseInt(btn.dataset.duration),
-          JSON.parse(btn.dataset.tags || '[]')
+          JSON.parse(btn.dataset.tags || '[]'),
+          JSON.parse(btn.dataset.segments || '[]')
         );
       });
     });
   },
 
-  openEditModal(sessionId, duration, tags) {
+  openEditModal(sessionId, duration, tags, tagSegments) {
     this.editingSessionId = sessionId;
     this.editSessionTags = [...tags];
+    this.editTagSegments = (tagSegments || []).map(s => ({
+      tags: [...(s.tags || [])],
+      duration: Math.round(((s.end || 0) - (s.start || 0)) / 60)
+    }));
 
     const durationMin = Math.floor(duration / 60);
-    const durationSec = duration % 60;
     this.elements.editDuration.value = durationMin || 1;
+
+    if (this.editTagSegments.length > 0) {
+      this.elements.editSegmentsField.style.display = '';
+      this.renderEditSegments();
+    } else {
+      this.elements.editSegmentsField.style.display = 'none';
+    }
 
     this.renderEditTags();
     this.elements.editModal.style.display = 'flex';
@@ -198,6 +219,7 @@ const Stats = {
     this.elements.editModal.style.display = 'none';
     this.editingSessionId = null;
     this.editSessionTags = [];
+    this.editTagSegments = [];
   },
 
   renderEditTags() {
@@ -212,6 +234,60 @@ const Stats = {
       btn.addEventListener('click', () => {
         this.editSessionTags = this.editSessionTags.filter(t => t !== btn.dataset.tag);
         this.renderEditTags();
+      });
+    });
+  },
+
+  renderEditSegments() {
+    this.elements.editSegmentsList.innerHTML = this.editTagSegments.map((seg, i) => {
+      const tagsHtml = seg.tags.map(t =>
+        `<span class="edit-segment-tag">${this.escapeHtml(t)}<span class="edit-segment-tag-remove" data-seg="${i}" data-tag="${this.escapeHtml(t)}">&times;</span></span>`
+      ).join('');
+      return `
+        <div class="edit-segment-row" data-seg="${i}">
+          <div class="edit-segment-tags">
+            ${tagsHtml}
+            <input type="text" class="edit-segment-tag-input" placeholder="tag..." data-seg="${i}" autocomplete="off">
+          </div>
+          <input type="number" class="edit-segment-duration" value="${seg.duration}" min="0" max="999" data-seg="${i}" title="Duração (min)">
+          <span class="edit-segment-unit">min</span>
+          <button class="edit-segment-remove" data-seg="${i}" title="Remover intervalo">&times;</button>
+        </div>`;
+    }).join('');
+
+    this.elements.editSegmentsList.querySelectorAll('.edit-segment-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.editTagSegments.splice(parseInt(btn.dataset.seg), 1);
+        this.renderEditSegments();
+      });
+    });
+
+    this.elements.editSegmentsList.querySelectorAll('.edit-segment-duration').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const i = parseInt(e.target.dataset.seg);
+        this.editTagSegments[i].duration = parseInt(e.target.value) || 0;
+      });
+    });
+
+    this.elements.editSegmentsList.querySelectorAll('.edit-segment-tag-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.seg);
+        this.editTagSegments[i].tags = this.editTagSegments[i].tags.filter(t => t !== btn.dataset.tag);
+        this.renderEditSegments();
+      });
+    });
+
+    this.elements.editSegmentsList.querySelectorAll('.edit-segment-tag-input').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const i = parseInt(input.dataset.seg);
+          const val = input.value.trim().toLowerCase();
+          if (val && !this.editTagSegments[i].tags.includes(val)) {
+            this.editTagSegments[i].tags.push(val);
+            this.renderEditSegments();
+          }
+        }
       });
     });
   },
@@ -271,10 +347,25 @@ const Stats = {
     const newDuration = newDurationMin * 60;
     const tagsToSend = [...this.editSessionTags];
 
-    const success = await Storage.updateSession(this.editingSessionId, {
+    const updateData = {
       duration: newDuration,
       tags: tagsToSend
-    });
+    };
+
+    if (this.editTagSegments.length > 0) {
+      let accumulated = 0;
+      updateData.tagSegments = this.editTagSegments.map(seg => {
+        const start = accumulated;
+        accumulated += seg.duration * 60;
+        return {
+          tags: seg.tags,
+          start: start,
+          end: accumulated
+        };
+      });
+    }
+
+    const success = await Storage.updateSession(this.editingSessionId, updateData);
 
     if (success) {
       this.closeEditModal();

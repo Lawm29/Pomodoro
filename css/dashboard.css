@@ -390,3 +390,119 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px var(--accent-focus-glow);
 }
+
+/* Edit segments */
+.edit-segments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.edit-segment-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+}
+
+.edit-segment-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  flex: 1;
+}
+
+.edit-segment-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.5rem;
+  background: var(--tag-bg);
+  color: var(--tag-text);
+  border-radius: 10px;
+  font-size: 0.75rem;
+}
+
+.edit-segment-tag-remove {
+  cursor: pointer;
+  opacity: 0.6;
+  font-size: 0.8rem;
+  line-height: 1;
+}
+
+.edit-segment-tag-remove:hover {
+  opacity: 1;
+}
+
+.edit-segment-tag-input {
+  width: 60px;
+  padding: 0.2rem 0.4rem;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  outline: none;
+}
+
+.edit-segment-tag-input:focus {
+  border-color: var(--accent-focus);
+}
+
+.edit-segment-duration {
+  width: 50px;
+  padding: 0.2rem 0.4rem;
+  background: var(--input-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  text-align: center;
+  outline: none;
+}
+
+.edit-segment-duration:focus {
+  border-color: var(--accent-focus);
+}
+
+.edit-segment-unit {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.edit-segment-remove {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.edit-segment-remove:hover {
+  color: var(--accent-focus);
+}
+
+.edit-segment-add-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.edit-segment-add-btn:hover {
+  border-color: var(--accent-focus);
+  color: var(--accent-focus);
+}

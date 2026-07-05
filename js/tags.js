@@ -2,6 +2,8 @@ const Tags = {
   currentTags: [],
   allTagNames: [],
   highlightedIndex: -1,
+  selectingEndTags: false,
+  selectedEndTags: [],
 
   elements: {},
 
@@ -20,6 +22,12 @@ const Tags = {
     this.elements.input.addEventListener('focus', () => {
       if (this.elements.input.value.trim()) {
         this.showSuggestions();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && this.selectingEndTags) {
+        this.cancelEndTagSelection();
       }
     });
 
@@ -159,11 +167,43 @@ const Tags = {
   },
 
   endTag() {
-    if (Timer.endCurrentTag()) {
-      this.currentTags = [];
-      Timer.currentTags = [];
-      this.renderTags();
+    if (!Timer.activeSegment) return;
+
+    this.selectingEndTags = true;
+    this.selectedEndTags = Timer.activeSegment.tags.slice();
+    Timer.updateEndTagBtn();
+    this.renderTags();
+  },
+
+  toggleEndTagSelection(tag) {
+    if (!this.selectingEndTags) return;
+    if (this.selectedEndTags.includes(tag)) {
+      this.selectedEndTags = this.selectedEndTags.filter(t => t !== tag);
+    } else {
+      this.selectedEndTags.push(tag);
     }
+    Timer.updateEndTagBtn();
+    this.renderTags();
+  },
+
+  confirmEndTag() {
+    if (!this.selectingEndTags) return;
+    const tagsToKeep = Timer.activeSegment.tags.filter(
+      t => !this.selectedEndTags.includes(t)
+    );
+    Timer.endCurrentTag(tagsToKeep);
+    this.selectingEndTags = false;
+    this.selectedEndTags = [];
+    this.currentTags = Timer.currentTags.slice();
+    Timer.updateEndTagBtn();
+    this.renderTags();
+  },
+
+  cancelEndTagSelection() {
+    this.selectingEndTags = false;
+    this.selectedEndTags = [];
+    Timer.updateEndTagBtn();
+    this.renderTags();
   },
 
   clearTags() {
@@ -192,9 +232,17 @@ const Tags = {
 
     if (active) {
       active.tags.forEach(tag => {
-        html += `<span class="tag-item active">
-          ${this.escapeHtml(tag)}
-        </span>`;
+        if (this.selectingEndTags) {
+          const selected = this.selectedEndTags.includes(tag);
+          html += `<span class="tag-item active selectable ${selected ? 'selected' : ''}" data-endtag="${this.escapeHtml(tag)}">
+            ${this.escapeHtml(tag)}
+            <span class="tag-select-icon">${selected ? '✓' : '○'}</span>
+          </span>`;
+        } else {
+          html += `<span class="tag-item active">
+            ${this.escapeHtml(tag)}
+          </span>`;
+        }
       });
     }
 
@@ -222,6 +270,12 @@ const Tags = {
     this.elements.list.querySelectorAll('.tag-remove').forEach(btn => {
       btn.addEventListener('click', () => {
         this.removeTag(btn.dataset.tag);
+      });
+    });
+
+    this.elements.list.querySelectorAll('.tag-item.selectable').forEach(el => {
+      el.addEventListener('click', () => {
+        this.toggleEndTagSelection(el.dataset.endtag);
       });
     });
   },
