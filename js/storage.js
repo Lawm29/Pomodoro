@@ -74,11 +74,12 @@ const Storage = {
     }
   },
 
-  async loadSessions(period) {
+  async loadSessions(period, month, year) {
     try {
       let query = db.collection(this.COLLECTION_SESSIONS).orderBy('completedAt', 'desc');
       const now = new Date();
       let startDate = null;
+      let endDate = null;
 
       if (period === 'today') {
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -87,11 +88,17 @@ const Storage = {
         startDate.setDate(now.getDate() - now.getDay());
         startDate.setHours(0, 0, 0, 0);
       } else if (period === 'month') {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        const m = month !== undefined ? month : now.getMonth();
+        const y = year !== undefined ? year : now.getFullYear();
+        startDate = new Date(y, m, 1);
+        endDate = new Date(y, m + 1, 0, 23, 59, 59, 999);
       }
 
       if (startDate) {
         query = query.where('completedAt', '>=', startDate.toISOString());
+      }
+      if (endDate) {
+        query = query.where('completedAt', '<=', endDate.toISOString());
       }
 
       const snapshot = await query.get();
@@ -147,6 +154,37 @@ const Storage = {
     } catch (e) {
       console.error('Erro ao carregar tags:', e);
       return {};
+    }
+  },
+
+  async renameTag(oldTag, newTag) {
+    try {
+      const sessions = await this.loadAllSessions();
+      let count = 0;
+      for (const s of sessions) {
+        const hasInTags = s.tags && s.tags.includes(oldTag);
+        const hasInSegments = s.tagSegments && s.tagSegments.some(
+          seg => seg.tags && seg.tags.includes(oldTag)
+        );
+        if (!hasInTags && !hasInSegments) continue;
+
+        const updateData = {};
+        if (hasInTags) {
+          updateData.tags = s.tags.map(t => t === oldTag ? newTag : t);
+        }
+        if (hasInSegments) {
+          updateData.tagSegments = s.tagSegments.map(seg => ({
+            ...seg,
+            tags: seg.tags.map(t => t === oldTag ? newTag : t)
+          }));
+        }
+        await this.updateSession(s.id, updateData);
+        count++;
+      }
+      return count;
+    } catch (e) {
+      console.error('Erro ao renomear tag:', e);
+      return 0;
     }
   }
 };

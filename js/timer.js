@@ -156,10 +156,13 @@ const Timer = {
 
     if (this.activeSegment) {
       this.activeSegment.tags.push(tagName);
+      if (!this.activeSegment.tagStarts) this.activeSegment.tagStarts = {};
+      this.activeSegment.tagStarts[tagName] = elapsed;
     } else {
       this.activeSegment = {
         tags: [tagName],
-        start: elapsed
+        start: elapsed,
+        tagStarts: { [tagName]: elapsed }
       };
     }
 
@@ -168,6 +171,24 @@ const Timer = {
     if (typeof Tags !== 'undefined') {
       Tags.renderTags();
     }
+  },
+
+  _segmentsFromTagStarts(tags, tagStarts, end) {
+    if (!tagStarts || Object.keys(tagStarts).length === 0) {
+      const minStart = tags.length > 0 ? Math.min(...tags.map(() => 0)) : 0;
+      return [{ tags, start: minStart, end }];
+    }
+    const groups = {};
+    tags.forEach(tag => {
+      const s = tagStarts[tag] ?? 0;
+      if (!groups[s]) groups[s] = [];
+      groups[s].push(tag);
+    });
+    return Object.entries(groups).map(([start, t]) => ({
+      tags: t,
+      start: parseInt(start),
+      end
+    }));
   },
 
   endCurrentTag(tagsToKeep) {
@@ -180,15 +201,23 @@ const Timer = {
 
     if (endedTags.length === 0) return false;
 
-    const endedSegment = {
-      tags: endedTags,
-      start: this.activeSegment.start,
-      end: elapsed
-    };
-    this.tagSegments.push(endedSegment);
+    const endedSegments = this._segmentsFromTagStarts(
+      endedTags, this.activeSegment.tagStarts, elapsed
+    );
+    endedSegments.forEach(seg => this.tagSegments.push(seg));
 
     if (tagsToKeep && tagsToKeep.length > 0) {
       this.activeSegment.tags = tagsToKeep;
+      if (this.activeSegment.tagStarts) {
+        const newStarts = {};
+        tagsToKeep.forEach(t => {
+          newStarts[t] = this.activeSegment.tagStarts[t] ?? elapsed;
+        });
+        this.activeSegment.tagStarts = newStarts;
+      }
+      this.activeSegment.start = Math.min(...tagsToKeep.map(
+        t => this.activeSegment.tagStarts?.[t] ?? elapsed
+      ));
     } else {
       this.activeSegment = null;
     }
@@ -373,8 +402,10 @@ const Timer = {
   reset() {
     if (this.activeSegment) {
       const elapsed = this.getElapsed();
-      this.activeSegment.end = elapsed;
-      this.tagSegments.push(this.activeSegment);
+      const segments = this._segmentsFromTagStarts(
+        this.activeSegment.tags, this.activeSegment.tagStarts, elapsed
+      );
+      segments.forEach(seg => this.tagSegments.push(seg));
       this.activeSegment = null;
       this.updateEndTagBtn();
       if (typeof Tags !== 'undefined') {
@@ -409,8 +440,10 @@ const Timer = {
     }
 
     if (this.activeSegment) {
-      this.activeSegment.end = actualDuration;
-      this.tagSegments.push(this.activeSegment);
+      const segments = this._segmentsFromTagStarts(
+        this.activeSegment.tags, this.activeSegment.tagStarts, actualDuration
+      );
+      segments.forEach(seg => this.tagSegments.push(seg));
       this.activeSegment = null;
     }
 

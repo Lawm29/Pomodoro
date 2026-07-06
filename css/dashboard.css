@@ -35,6 +35,45 @@
   border-color: var(--accent-focus);
 }
 
+/* Month navigation */
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.month-nav-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.month-nav-btn:hover {
+  background: var(--accent-focus);
+  color: #fff;
+  border-color: var(--accent-focus);
+}
+
+.month-nav-label {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 140px;
+  text-align: center;
+}
+
 /* Summary cards */
 .stats-summary {
   display: grid;
@@ -120,6 +159,30 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tag-chart-name.editable {
+  cursor: pointer;
+  transition: color 0.15s;
+  border-bottom: 1px dashed transparent;
+}
+
+.tag-chart-name.editable:hover {
+  color: var(--accent-focus);
+  border-bottom-color: var(--accent-focus);
+}
+
+.tag-chart-name-input {
+  min-width: 60px;
+  max-width: 150px;
+  padding: 0.1rem 0.4rem;
+  background: var(--input-bg);
+  border: 1px solid var(--accent-focus);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  text-align: right;
+  outline: none;
 }
 
 .tag-chart-bar-wrapper {

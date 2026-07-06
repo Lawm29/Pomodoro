@@ -1,5 +1,7 @@
 const Stats = {
   currentPeriod: 'today',
+  currentMonth: new Date().getMonth(),
+  currentYear: new Date().getFullYear(),
   editingSessionId: null,
   editSessionTags: [],
   editTagSegments: [],
@@ -21,15 +23,54 @@ const Stats = {
       editSave: document.getElementById('btnEditSave'),
       editSegmentsField: document.getElementById('editSegmentsField'),
       editSegmentsList: document.getElementById('editSegmentsList'),
-      btnAddSegment: document.getElementById('btnAddSegment')
+      btnAddSegment: document.getElementById('btnAddSegment'),
+      monthNav: document.getElementById('monthNav'),
+      monthLabel: document.getElementById('monthLabel'),
+      btnPrevMonth: document.getElementById('btnPrevMonth'),
+      btnNextMonth: document.getElementById('btnNextMonth')
     };
+
+    const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
+      'Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+    this.updateMonthLabel = () => {
+      this.elements.monthLabel.textContent = `${MONTH_NAMES[this.currentMonth]} ${this.currentYear}`;
+      const now = new Date();
+      this.elements.btnNextMonth.style.visibility =
+        (this.currentYear === now.getFullYear() && this.currentMonth >= now.getMonth()) ? 'hidden' : 'visible';
+    };
+
+    this.elements.btnPrevMonth.addEventListener('click', () => {
+      this.currentMonth--;
+      if (this.currentMonth < 0) { this.currentMonth = 11; this.currentYear--; }
+      this.updateMonthLabel();
+      this.load().then(() => this.attachEditListeners());
+    });
+
+    this.elements.btnNextMonth.addEventListener('click', () => {
+      const now = new Date();
+      if (this.currentYear < now.getFullYear() || this.currentMonth < now.getMonth()) {
+        this.currentMonth++;
+        if (this.currentMonth > 11) { this.currentMonth = 0; this.currentYear++; }
+        this.updateMonthLabel();
+        this.load().then(() => this.attachEditListeners());
+      }
+    });
 
     document.querySelectorAll('.filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         this.currentPeriod = btn.dataset.period;
-        this.load();
+        if (btn.dataset.period === 'month') {
+          this.currentMonth = new Date().getMonth();
+          this.currentYear = new Date().getFullYear();
+          this.elements.monthNav.style.display = 'flex';
+          this.updateMonthLabel();
+        } else {
+          this.elements.monthNav.style.display = 'none';
+        }
+        this.load().then(() => this.attachEditListeners());
       });
     });
 
@@ -65,6 +106,8 @@ const Stats = {
     let sessions;
     if (this.currentPeriod === 'all') {
       sessions = await Storage.loadAllSessions();
+    } else if (this.currentPeriod === 'month') {
+      sessions = await Storage.loadSessions('month', this.currentMonth, this.currentYear);
     } else {
       sessions = await Storage.loadSessions(this.currentPeriod);
     }
@@ -122,13 +165,17 @@ const Stats = {
       const pct = (time / maxTime) * 100;
       return `
         <div class="tag-chart-row">
-          <span class="tag-chart-name">${this.escapeHtml(tag)}</span>
+          <span class="tag-chart-name editable" data-tag="${this.escapeHtml(tag)}" title="Clique para renomear">${this.escapeHtml(tag)}</span>
           <div class="tag-chart-bar-wrapper">
             <div class="tag-chart-bar" style="width: ${pct}%"></div>
           </div>
           <span class="tag-chart-time">${this.formatDuration(time)}</span>
         </div>`;
     }).join('');
+
+    this.elements.tagsChart.querySelectorAll('.tag-chart-name.editable').forEach(el => {
+      el.addEventListener('click', () => this.handleRenameTag(el.dataset.tag, el));
+    });
   },
 
   renderFocusHistory(sessions) {
@@ -290,6 +337,37 @@ const Stats = {
         }
       });
     });
+  },
+
+  handleRenameTag(oldTag, element) {
+    const currentName = element.textContent;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'tag-chart-name-input';
+    input.value = currentName;
+    input.style.width = Math.max(60, currentName.length * 10) + 'px';
+
+    element.replaceWith(input);
+    input.focus();
+    input.select();
+
+    const finish = async () => {
+      const newTag = input.value.trim().toLowerCase();
+      if (newTag && newTag !== oldTag) {
+        const confirmed = confirm(`Renomear '${oldTag}' para '${newTag}' em todas as sessões?`);
+        if (confirmed) {
+          await Storage.renameTag(oldTag, newTag);
+          Tags.loadAllTags();
+        }
+      }
+      this.load().then(() => this.attachEditListeners());
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { input.value = currentName; input.blur(); }
+    });
+    input.addEventListener('blur', finish);
   },
 
   async onEditTagInput() {
