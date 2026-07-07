@@ -109,8 +109,47 @@ const Timer = {
       });
     }
 
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden && this.isRunning) {
+        this.syncTimer();
+      }
+    });
+
     this.CIRCUMFERENCE = 2 * Math.PI * 90;
     this.elements.progress.style.strokeDasharray = this.CIRCUMFERENCE;
+  },
+
+  syncTimer() {
+    if (!this.isRunning) return;
+
+    const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
+
+    if (this.countUp) {
+      this.remaining = this.startRemaining + elapsed;
+      this.breakElapsed = this.remaining;
+
+      if (this.remaining >= this.duration) {
+        this.remaining = this.duration;
+        this.breakElapsed = this.duration;
+        this.updateDisplay();
+        this.updateProgress();
+        this.complete();
+        return;
+      }
+    } else {
+      this.remaining = this.startRemaining - elapsed;
+
+      if (this.remaining <= 0) {
+        this.remaining = 0;
+        this.updateDisplay();
+        this.updateProgress();
+        this.complete();
+        return;
+      }
+    }
+
+    this.updateDisplay();
+    this.updateProgress();
   },
 
   configure(settings) {
