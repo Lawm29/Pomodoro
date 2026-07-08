@@ -7,6 +7,7 @@ const Stats = {
   editTagSegments: [],
   manualTags: [],
   manualTagSegments: [],
+  cachedAllTagNames: null,
 
   init() {
     this.elements = {
@@ -376,17 +377,7 @@ const Stats = {
     });
 
     this.elements.editSegmentsList.querySelectorAll('.edit-segment-tag-input').forEach(input => {
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const i = parseInt(input.dataset.seg);
-          const val = input.value.trim().toLowerCase();
-          if (val && !this.editTagSegments[i].tags.includes(val)) {
-            this.editTagSegments[i].tags.push(val);
-            this.renderEditSegments();
-          }
-        }
-      });
+      this.setupSegmentTagAutocomplete(input, parseInt(input.dataset.seg), this.editTagSegments, () => this.renderEditSegments());
     });
   },
 
@@ -647,18 +638,78 @@ const Stats = {
     });
 
     this.elements.manualSegmentsList.querySelectorAll('.edit-segment-tag-input').forEach(input => {
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const i = parseInt(input.dataset.seg);
-          const val = input.value.trim().toLowerCase();
-          if (val && !this.manualTagSegments[i].tags.includes(val)) {
-            this.manualTagSegments[i].tags.push(val);
-            this.renderManualSegments();
-          }
-        }
-      });
+      this.setupSegmentTagAutocomplete(input, parseInt(input.dataset.seg), this.manualTagSegments, () => this.renderManualSegments());
     });
+  },
+
+  async getTagNames() {
+    if (this.cachedAllTagNames) return this.cachedAllTagNames;
+    try {
+      const tagTime = await Storage.loadAllTags();
+      this.cachedAllTagNames = Object.keys(tagTime).sort();
+    } catch (e) {
+      this.cachedAllTagNames = [];
+    }
+    return this.cachedAllTagNames;
+  },
+
+  setupSegmentTagAutocomplete(input, segIndex, segmentsArray, onAddCallback) {
+    let suggestionsEl = null;
+
+    const showSuggestions = async () => {
+      const value = input.value.trim().toLowerCase();
+      if (!value) { hideSuggestions(); return; }
+
+      const allTags = await this.getTagNames();
+      const alreadyInSegment = segmentsArray[segIndex].tags;
+
+      let filtered = allTags.filter(tag =>
+        tag.toLowerCase().startsWith(value) &&
+        !alreadyInSegment.includes(tag.toLowerCase())
+      );
+      if (filtered.length === 0) {
+        filtered = allTags.filter(tag =>
+          tag.toLowerCase().includes(value) &&
+          !alreadyInSegment.includes(tag.toLowerCase())
+        );
+      }
+      filtered = filtered.slice(0, 5);
+
+      if (filtered.length === 0) { hideSuggestions(); return; }
+
+      if (!suggestionsEl) {
+        suggestionsEl = document.createElement('div');
+        suggestionsEl.className = 'segment-tag-suggestions';
+        input.parentNode.appendChild(suggestionsEl);
+      }
+
+      suggestionsEl.innerHTML = filtered.map(tag =>
+        `<div class="suggestion-item">${this.escapeHtml(tag)}</div>`
+      ).join('');
+
+      suggestionsEl.querySelectorAll('.suggestion-item').forEach(item => {
+        item.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const tag = item.textContent.trim().toLowerCase();
+          if (!segmentsArray[segIndex].tags.includes(tag)) {
+            segmentsArray[segIndex].tags.push(tag);
+            onAddCallback();
+          }
+          input.value = '';
+          hideSuggestions();
+        });
+      });
+
+      suggestionsEl.classList.add('visible');
+    };
+
+    const hideSuggestions = () => {
+      if (suggestionsEl) suggestionsEl.classList.remove('visible');
+    };
+
+    input.addEventListener('input', showSuggestions);
+    input.addEventListener('focus', () => { if (input.value.trim()) showSuggestions(); });
+    input.addEventListener('blur', () => setTimeout(hideSuggestions, 150));
   },
 
   async onManualTagInput() {

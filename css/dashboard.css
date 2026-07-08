@@ -515,6 +515,7 @@
   flex-wrap: wrap;
   gap: 0.3rem;
   flex: 1;
+  position: relative;
 }
 
 .edit-segment-tag {
@@ -552,6 +553,38 @@
 
 .edit-segment-tag-input:focus {
   border-color: var(--accent-focus);
+}
+
+.segment-tag-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 120px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  margin-top: 4px;
+  display: none;
+  z-index: 1001;
+  max-height: 120px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.segment-tag-suggestions.visible {
+  display: block;
+}
+
+.segment-tag-suggestions .suggestion-item {
+  padding: 0.4rem 0.8rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.segment-tag-suggestions .suggestion-item:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .edit-segment-duration {
