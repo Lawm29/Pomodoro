@@ -193,7 +193,7 @@
         <label>Duração (minutos)</label>
         <input type="number" id="editSessionDuration" class="settings-input" min="1" max="999">
       </div>
-      <div class="edit-modal-field" id="editSegmentsField" style="display:none">
+      <div class="edit-modal-field" id="editSegmentsField">
         <label>Intervalos de Tag</label>
         <div class="edit-segments-list" id="editSegmentsList"></div>
         <button class="edit-segment-add-btn" id="btnAddSegment">+ Adicionar intervalo</button>
@@ -207,6 +207,7 @@
         <div class="edit-tags-list" id="editSessionTags"></div>
       </div>
       <div class="edit-modal-actions">
+        <button class="edit-modal-btn delete" id="btnEditDelete">Excluir</button>
         <button class="edit-modal-btn cancel" id="btnEditCancel">Cancelar</button>
         <button class="edit-modal-btn save" id="btnEditSave">Salvar</button>
       </div>
@@ -254,7 +255,7 @@
         </div>
         <div class="edit-tags-list" id="manualSessionTags"></div>
       </div>
-      <div class="edit-modal-field" id="manualSegmentsField" style="display:none">
+      <div class="edit-modal-field" id="manualSegmentsField">
         <label>Intervalos de Tag</label>
         <div class="edit-segments-list" id="manualSegmentsList"></div>
         <button class="edit-segment-add-btn" id="btnManualAddSegment">+ Adicionar intervalo</button>

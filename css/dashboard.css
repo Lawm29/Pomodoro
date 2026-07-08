@@ -480,6 +480,18 @@
   box-shadow: 0 4px 12px var(--accent-focus-glow);
 }
 
+.edit-modal-btn.delete {
+  background: transparent;
+  color: #e74c3c;
+  border: 1px solid #e74c3c;
+  margin-right: auto;
+}
+
+.edit-modal-btn.delete:hover {
+  background: #e74c3c;
+  color: #fff;
+}
+
 /* Edit segments */
 .edit-segments-list {
   display: flex;

@@ -23,6 +23,7 @@ const Stats = {
       editSessionTags: document.getElementById('editSessionTags'),
       editCancel: document.getElementById('btnEditCancel'),
       editSave: document.getElementById('btnEditSave'),
+      editDelete: document.getElementById('btnEditDelete'),
       editSegmentsField: document.getElementById('editSegmentsField'),
       editSegmentsList: document.getElementById('editSegmentsList'),
       btnAddSegment: document.getElementById('btnAddSegment'),
@@ -92,6 +93,7 @@ const Stats = {
     // Edit modal events
     this.elements.editCancel.addEventListener('click', () => this.closeEditModal());
     this.elements.editSave.addEventListener('click', () => this.saveEdit());
+    this.elements.editDelete.addEventListener('click', () => this.deleteSession());
     this.elements.editModal.addEventListener('click', (e) => {
       if (e.target === this.elements.editModal) this.closeEditModal();
     });
@@ -292,13 +294,7 @@ const Stats = {
     const durationMin = Math.floor(duration / 60);
     this.elements.editDuration.value = durationMin || 1;
 
-    if (this.editTagSegments.length > 0) {
-      this.elements.editSegmentsField.style.display = '';
-      this.renderEditSegments();
-    } else {
-      this.elements.editSegmentsField.style.display = 'none';
-    }
-
+    this.renderEditSegments();
     this.renderEditTags();
     this.elements.editModal.style.display = 'flex';
     this.elements.editDuration.focus();
@@ -309,6 +305,19 @@ const Stats = {
     this.editingSessionId = null;
     this.editSessionTags = [];
     this.editTagSegments = [];
+  },
+
+  async deleteSession() {
+    if (!this.editingSessionId) return;
+    const confirmed = confirm('Tem certeza que deseja excluir este registro?');
+    if (!confirmed) return;
+
+    const success = await Storage.deleteSession(this.editingSessionId);
+    if (success) {
+      this.closeEditModal();
+      await this.load();
+      this.attachEditListeners();
+    }
   },
 
   renderEditTags() {
@@ -514,7 +523,7 @@ const Stats = {
     this.manualTags = [];
     this.manualTagSegments = [];
     this.renderManualTags();
-    this.elements.manualSegmentsField.style.display = 'none';
+    this.renderManualSegments();
 
     const now = new Date();
     this.elements.manualDate.value = now.toISOString().split('T')[0];
@@ -618,9 +627,6 @@ const Stats = {
     this.elements.manualSegmentsList.querySelectorAll('.edit-segment-remove').forEach(btn => {
       btn.addEventListener('click', () => {
         this.manualTagSegments.splice(parseInt(btn.dataset.seg), 1);
-        if (this.manualTagSegments.length === 0) {
-          this.elements.manualSegmentsField.style.display = 'none';
-        }
         this.renderManualSegments();
       });
     });
