@@ -111,12 +111,146 @@ const Timer = {
 
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && this.isRunning) {
-        this.syncTimer();
+        this.restoreState();
       }
     });
 
     this.CIRCUMFERENCE = 2 * Math.PI * 90;
     this.elements.progress.style.strokeDasharray = this.CIRCUMFERENCE;
+
+    this.restoreState();
+  },
+
+  STORAGE_KEY: 'pomodoroTimerState',
+
+  saveState() {
+    try {
+      const state = {
+        isRunning: this.isRunning,
+        startTimestamp: this.startTimestamp,
+        startRemaining: this.startRemaining,
+        mode: this.mode,
+        duration: this.duration,
+        countUp: this.countUp,
+        sessionCount: this.sessionCount,
+        tagSegments: this.tagSegments,
+        activeSegment: this.activeSegment,
+        currentTags: this.currentTags,
+        breakElapsed: this.breakElapsed,
+        autoTransition: this.autoTransition
+      };
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+  },
+
+  clearState() {
+    localStorage.removeItem(this.STORAGE_KEY);
+  },
+
+  restoreState() {
+    try {
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      if (!raw) return;
+
+      const state = JSON.parse(raw);
+      if (!state.isRunning) return;
+
+      const elapsed = Math.floor((Date.now() - state.startTimestamp) / 1000);
+
+      this.mode = state.mode;
+      this.duration = state.duration;
+      this.countUp = state.countUp;
+      this.sessionCount = state.sessionCount || 0;
+      this.tagSegments = state.tagSegments || [];
+      this.activeSegment = state.activeSegment || null;
+      this.currentTags = state.currentTags || [];
+      this.breakElapsed = state.breakElapsed || 0;
+      this.autoTransition = state.autoTransition !== false;
+
+      if (this.countUp) {
+        this.remaining = state.startRemaining + elapsed;
+        this.breakElapsed = this.remaining;
+
+        if (this.remaining >= this.duration) {
+          this.remaining = this.duration;
+          this.breakElapsed = this.duration;
+          this.updateDisplay();
+          this.updateProgress();
+          this.complete();
+          return;
+        }
+      } else {
+        this.remaining = state.startRemaining - elapsed;
+
+        if (this.remaining <= 0) {
+          this.remaining = 0;
+          this.updateDisplay();
+          this.updateProgress();
+          this.complete();
+          return;
+        }
+      }
+
+      this.startTimestamp = state.startTimestamp;
+      this.startRemaining = state.startRemaining;
+      this.isRunning = true;
+
+      this.elements.typeLabel.textContent =
+        this.mode === 'focus' ? 'Foco' :
+        this.mode === 'shortBreak' ? 'Pausa Curta' : 'Pausa Longa';
+      this.elements.typeLabel.className = 'session-type ' + (this.mode === 'focus' ? 'focus' : 'break');
+      this.elements.sessionCount.textContent = `${this.sessionCount + 1} / ${this.totalSessions}`;
+      this.elements.playPause.textContent = '⏸';
+      this.elements.wrapper.classList.remove('paused');
+      this.elements.display.classList.remove('paused');
+
+      if (this.mode === 'focus') {
+        this.elements.progress.classList.remove('break-mode');
+        this.elements.progress.style.display = '';
+        if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Pular';
+      } else {
+        this.elements.progress.classList.add('break-mode');
+        this.elements.progress.style.display = 'none';
+        if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
+      }
+
+      this.updateDisplay();
+      this.updateProgress();
+      this.updateEndTagBtn();
+      if (typeof Tags !== 'undefined') Tags.renderTags();
+
+      clearInterval(this.interval);
+      this.interval = setInterval(() => {
+        const e = Math.floor((Date.now() - this.startTimestamp) / 1000);
+
+        if (this.countUp) {
+          this.remaining = this.startRemaining + e;
+          this.breakElapsed = this.remaining;
+          if (this.remaining >= this.duration) {
+            this.remaining = this.duration;
+            this.breakElapsed = this.duration;
+            this.updateDisplay();
+            this.complete();
+            return;
+          }
+        } else {
+          this.remaining = this.startRemaining - e;
+          if (this.remaining <= 0) {
+            this.remaining = 0;
+            this.updateDisplay();
+            this.updateProgress();
+            this.complete();
+            return;
+          }
+        }
+
+        this.updateDisplay();
+        this.updateProgress();
+        this.saveState();
+      }, 250);
+    } catch (e) {
+      this.clearState();
+    }
   },
 
   syncTimer() {
@@ -366,6 +500,7 @@ const Timer = {
     this.elements.wrapper.classList.remove('paused');
     this.elements.display.classList.remove('paused');
     this.updateEndTagBtn();
+    this.saveState();
 
     this.interval = setInterval(() => {
       const elapsed = Math.floor((Date.now() - this.startTimestamp) / 1000);
@@ -395,6 +530,7 @@ const Timer = {
 
       this.updateDisplay();
       this.updateProgress();
+      this.saveState();
     }, 250);
   },
 
@@ -412,6 +548,7 @@ const Timer = {
 
     this.isRunning = false;
     clearInterval(this.interval);
+    this.clearState();
     this.elements.playPause.textContent = '▶';
     this.elements.wrapper.classList.add('paused');
     this.elements.display.classList.add('paused');
@@ -432,6 +569,7 @@ const Timer = {
 
     this.isRunning = false;
     clearInterval(this.interval);
+    this.clearState();
     this.elements.playPause.textContent = '▶';
     this.elements.wrapper.classList.remove('paused');
     this.elements.display.classList.remove('paused');

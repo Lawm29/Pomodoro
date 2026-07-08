@@ -6,6 +6,7 @@ const Stats = {
   editSessionTags: [],
   editTagSegments: [],
   manualTags: [],
+  manualTagSegments: [],
 
   init() {
     this.elements = {
@@ -38,7 +39,10 @@ const Stats = {
       manualSessionTags: document.getElementById('manualSessionTags'),
       btnManualCancel: document.getElementById('btnManualCancel'),
       btnManualSave: document.getElementById('btnManualSave'),
-      btnManualEntry: document.getElementById('btnManualEntry')
+      btnManualEntry: document.getElementById('btnManualEntry'),
+      manualSegmentsField: document.getElementById('manualSegmentsField'),
+      manualSegmentsList: document.getElementById('manualSegmentsList'),
+      btnManualAddSegment: document.getElementById('btnManualAddSegment')
     };
 
     const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -118,6 +122,11 @@ const Stats = {
     this.elements.btnManualSave.addEventListener('click', () => this.saveManualEntry());
     this.elements.manualModal.addEventListener('click', (e) => {
       if (e.target === this.elements.manualModal) this.closeManualModal();
+    });
+    this.elements.btnManualAddSegment.addEventListener('click', () => {
+      this.manualTagSegments.push({ tags: [], duration: 0 });
+      this.elements.manualSegmentsField.style.display = '';
+      this.renderManualSegments();
     });
 
     // Manual tag input
@@ -503,7 +512,9 @@ const Stats = {
   // Manual entry modal
   openManualModal() {
     this.manualTags = [];
+    this.manualTagSegments = [];
     this.renderManualTags();
+    this.elements.manualSegmentsField.style.display = 'none';
 
     const now = new Date();
     this.elements.manualDate.value = now.toISOString().split('T')[0];
@@ -520,6 +531,7 @@ const Stats = {
   closeManualModal() {
     this.elements.manualModal.style.display = 'none';
     this.manualTags = [];
+    this.manualTagSegments = [];
   },
 
   async saveManualEntry() {
@@ -554,6 +566,16 @@ const Stats = {
       manual: true
     };
 
+    if (this.manualTagSegments.length > 0) {
+      let accumulated = 0;
+      session.tagSegments = this.manualTagSegments.map(seg => {
+        const start = accumulated;
+        accumulated += seg.duration * 60;
+        return { tags: seg.tags, start, end: accumulated };
+      });
+      session.tags = [...new Set(this.manualTagSegments.flatMap(s => s.tags))];
+    }
+
     const success = await Storage.saveSession(session);
 
     if (success) {
@@ -572,6 +594,63 @@ const Stats = {
       btn.addEventListener('click', () => {
         this.manualTags = this.manualTags.filter(t => t !== btn.dataset.tag);
         this.renderManualTags();
+      });
+    });
+  },
+
+  renderManualSegments() {
+    this.elements.manualSegmentsList.innerHTML = this.manualTagSegments.map((seg, i) => {
+      const tagsHtml = seg.tags.map(t =>
+        `<span class="edit-segment-tag">${this.escapeHtml(t)}<span class="edit-segment-tag-remove" data-seg="${i}" data-tag="${this.escapeHtml(t)}">&times;</span></span>`
+      ).join('');
+      return `
+        <div class="edit-segment-row" data-seg="${i}">
+          <div class="edit-segment-tags">
+            ${tagsHtml}
+            <input type="text" class="edit-segment-tag-input" placeholder="tag..." data-seg="${i}" autocomplete="off">
+          </div>
+          <input type="number" class="edit-segment-duration" value="${seg.duration}" min="0" max="999" data-seg="${i}" title="Duração (min)">
+          <span class="edit-segment-unit">min</span>
+          <button class="edit-segment-remove" data-seg="${i}" title="Remover intervalo">&times;</button>
+        </div>`;
+    }).join('');
+
+    this.elements.manualSegmentsList.querySelectorAll('.edit-segment-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.manualTagSegments.splice(parseInt(btn.dataset.seg), 1);
+        if (this.manualTagSegments.length === 0) {
+          this.elements.manualSegmentsField.style.display = 'none';
+        }
+        this.renderManualSegments();
+      });
+    });
+
+    this.elements.manualSegmentsList.querySelectorAll('.edit-segment-duration').forEach(input => {
+      input.addEventListener('change', (e) => {
+        const i = parseInt(e.target.dataset.seg);
+        this.manualTagSegments[i].duration = parseInt(e.target.value) || 0;
+      });
+    });
+
+    this.elements.manualSegmentsList.querySelectorAll('.edit-segment-tag-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const i = parseInt(btn.dataset.seg);
+        this.manualTagSegments[i].tags = this.manualTagSegments[i].tags.filter(t => t !== btn.dataset.tag);
+        this.renderManualSegments();
+      });
+    });
+
+    this.elements.manualSegmentsList.querySelectorAll('.edit-segment-tag-input').forEach(input => {
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const i = parseInt(input.dataset.seg);
+          const val = input.value.trim().toLowerCase();
+          if (val && !this.manualTagSegments[i].tags.includes(val)) {
+            this.manualTagSegments[i].tags.push(val);
+            this.renderManualSegments();
+          }
+        }
       });
     });
   },
