@@ -5,6 +5,7 @@ const Stats = {
   editingSessionId: null,
   editSessionTags: [],
   editTagSegments: [],
+  manualTags: [],
 
   init() {
     this.elements = {
@@ -27,7 +28,17 @@ const Stats = {
       monthNav: document.getElementById('monthNav'),
       monthLabel: document.getElementById('monthLabel'),
       btnPrevMonth: document.getElementById('btnPrevMonth'),
-      btnNextMonth: document.getElementById('btnNextMonth')
+      btnNextMonth: document.getElementById('btnNextMonth'),
+      manualModal: document.getElementById('manualModal'),
+      manualDate: document.getElementById('manualDate'),
+      manualTime: document.getElementById('manualTime'),
+      manualDuration: document.getElementById('manualDuration'),
+      manualTagInput: document.getElementById('manualTagInput'),
+      manualTagsSuggestions: document.getElementById('manualTagsSuggestions'),
+      manualSessionTags: document.getElementById('manualSessionTags'),
+      btnManualCancel: document.getElementById('btnManualCancel'),
+      btnManualSave: document.getElementById('btnManualSave'),
+      btnManualEntry: document.getElementById('btnManualEntry')
     };
 
     const MONTH_NAMES = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho',
@@ -99,6 +110,28 @@ const Stats = {
     this.elements.btnAddSegment.addEventListener('click', () => {
       this.editTagSegments.push({ tags: [], duration: 0 });
       this.renderEditSegments();
+    });
+
+    // Manual entry modal
+    this.elements.btnManualEntry.addEventListener('click', () => this.openManualModal());
+    this.elements.btnManualCancel.addEventListener('click', () => this.closeManualModal());
+    this.elements.btnManualSave.addEventListener('click', () => this.saveManualEntry());
+    this.elements.manualModal.addEventListener('click', (e) => {
+      if (e.target === this.elements.manualModal) this.closeManualModal();
+    });
+
+    // Manual tag input
+    this.elements.manualTagInput.addEventListener('input', () => this.onManualTagInput());
+    this.elements.manualTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = this.elements.manualTagInput.value.trim().toLowerCase();
+        if (val && !this.manualTags.includes(val)) {
+          this.manualTags.push(val);
+          this.renderManualTags();
+          this.elements.manualTagInput.value = '';
+        }
+      }
     });
   },
 
@@ -465,5 +498,123 @@ const Stats = {
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  },
+
+  // Manual entry modal
+  openManualModal() {
+    this.manualTags = [];
+    this.renderManualTags();
+
+    const now = new Date();
+    this.elements.manualDate.value = now.toISOString().split('T')[0];
+    this.elements.manualTime.value = now.toTimeString().slice(0, 5);
+    this.elements.manualDuration.value = 25;
+    this.elements.manualTagInput.value = '';
+    this.elements.manualTagsSuggestions.classList.remove('visible');
+
+    document.querySelector('input[name="manualType"][value="focus"]').checked = true;
+
+    this.elements.manualModal.style.display = 'flex';
+  },
+
+  closeManualModal() {
+    this.elements.manualModal.style.display = 'none';
+    this.manualTags = [];
+  },
+
+  async saveManualEntry() {
+    const dateVal = this.elements.manualDate.value;
+    const timeVal = this.elements.manualTime.value;
+    const durationMin = parseInt(this.elements.manualDuration.value) || 1;
+    const type = document.querySelector('input[name="manualType"]:checked').value;
+
+    if (!dateVal) {
+      alert('Selecione uma data.');
+      return;
+    }
+
+    const pendingTag = this.elements.manualTagInput.value.trim().toLowerCase();
+    if (pendingTag && !this.manualTags.includes(pendingTag)) {
+      this.manualTags.push(pendingTag);
+    }
+
+    let completedAt;
+    if (timeVal) {
+      completedAt = new Date(`${dateVal}T${timeVal}:00`).toISOString();
+    } else {
+      completedAt = new Date(`${dateVal}T12:00:00`).toISOString();
+    }
+
+    const session = {
+      type: type,
+      duration: durationMin * 60,
+      plannedDuration: durationMin * 60,
+      completedAt: completedAt,
+      tags: [...this.manualTags],
+      manual: true
+    };
+
+    const success = await Storage.saveSession(session);
+
+    if (success) {
+      this.closeManualModal();
+      await this.load();
+      this.attachEditListeners();
+    }
+  },
+
+  renderManualTags() {
+    this.elements.manualSessionTags.innerHTML = this.manualTags.map(tag =>
+      `<span class="edit-tag">${this.escapeHtml(tag)} <span class="edit-tag-remove" data-tag="${this.escapeHtml(tag)}">&times;</span></span>`
+    ).join('');
+
+    this.elements.manualSessionTags.querySelectorAll('.edit-tag-remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this.manualTags = this.manualTags.filter(t => t !== btn.dataset.tag);
+        this.renderManualTags();
+      });
+    });
+  },
+
+  async onManualTagInput() {
+    const value = this.elements.manualTagInput.value.trim().toLowerCase();
+    if (!value) {
+      this.elements.manualTagsSuggestions.classList.remove('visible');
+      return;
+    }
+
+    let allTagNames = [];
+    try {
+      const tagTime = await Storage.loadAllTags();
+      allTagNames = Object.keys(tagTime);
+    } catch (e) {}
+
+    const filtered = allTagNames.filter(tag =>
+      tag.toLowerCase().startsWith(value) &&
+      !this.manualTags.includes(tag.toLowerCase())
+    ).slice(0, 5);
+
+    if (filtered.length === 0) {
+      this.elements.manualTagsSuggestions.classList.remove('visible');
+      return;
+    }
+
+    this.elements.manualTagsSuggestions.innerHTML = filtered.map(tag =>
+      `<div class="suggestion-item">${this.escapeHtml(tag)}</div>`
+    ).join('');
+
+    this.elements.manualTagsSuggestions.querySelectorAll('.suggestion-item').forEach(item => {
+      item.addEventListener('mousedown', () => {
+        const tag = item.textContent.trim().toLowerCase();
+        if (!this.manualTags.includes(tag)) {
+          this.manualTags.push(tag);
+          this.renderManualTags();
+        }
+        this.elements.manualTagInput.value = '';
+        this.elements.manualTagsSuggestions.classList.remove('visible');
+      });
+    });
+
+    this.elements.manualTagsSuggestions.classList.add('visible');
   }
 };

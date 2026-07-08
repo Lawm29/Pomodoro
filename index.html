@@ -92,11 +92,14 @@
     <!-- STATS VIEW -->
     <section id="view-stats" class="view">
       <div class="stats-container">
-        <div class="stats-filters">
-          <button class="filter-btn active" data-period="today">Hoje</button>
-          <button class="filter-btn" data-period="week">Semana</button>
-          <button class="filter-btn" data-period="month">Mês</button>
-          <button class="filter-btn" data-period="all">Tudo</button>
+        <div class="stats-top-row">
+          <div class="stats-filters">
+            <button class="filter-btn active" data-period="today">Hoje</button>
+            <button class="filter-btn" data-period="week">Semana</button>
+            <button class="filter-btn" data-period="month">Mês</button>
+            <button class="filter-btn" data-period="all">Tudo</button>
+          </div>
+          <button class="manual-entry-btn" id="btnManualEntry" title="Adicionar registro manual">+ Registro</button>
         </div>
         <div class="month-nav" id="monthNav" style="display:none">
           <button class="month-nav-btn" id="btnPrevMonth">‹</button>
@@ -206,6 +209,54 @@
       <div class="edit-modal-actions">
         <button class="edit-modal-btn cancel" id="btnEditCancel">Cancelar</button>
         <button class="edit-modal-btn save" id="btnEditSave">Salvar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manual Entry Modal -->
+  <div class="edit-modal-overlay" id="manualModal" style="display:none">
+    <div class="edit-modal">
+      <h3 class="edit-modal-title">Registro Manual</h3>
+      <div class="edit-modal-field">
+        <label>Data</label>
+        <input type="date" id="manualDate" class="settings-input">
+      </div>
+      <div class="edit-modal-field">
+        <label>Hora (opcional)</label>
+        <input type="time" id="manualTime" class="settings-input">
+      </div>
+      <div class="edit-modal-field">
+        <label>Duração (minutos)</label>
+        <input type="number" id="manualDuration" class="settings-input" min="1" max="999" value="25">
+      </div>
+      <div class="edit-modal-field">
+        <label>Tipo</label>
+        <div class="manual-type-row">
+          <label class="manual-type-option">
+            <input type="radio" name="manualType" value="focus" checked>
+            <span class="manual-type-label focus">Foco</span>
+          </label>
+          <label class="manual-type-option">
+            <input type="radio" name="manualType" value="shortBreak">
+            <span class="manual-type-label break">Pausa Curta</span>
+          </label>
+          <label class="manual-type-option">
+            <input type="radio" name="manualType" value="longBreak">
+            <span class="manual-type-label break">Pausa Longa</span>
+          </label>
+        </div>
+      </div>
+      <div class="edit-modal-field">
+        <label>Tags</label>
+        <div class="edit-tags-input-wrapper">
+          <input type="text" id="manualTagInput" class="settings-input" placeholder="Adicionar tag..." autocomplete="off">
+          <div class="edit-tags-suggestions" id="manualTagsSuggestions"></div>
+        </div>
+        <div class="edit-tags-list" id="manualSessionTags"></div>
+      </div>
+      <div class="edit-modal-actions">
+        <button class="edit-modal-btn cancel" id="btnManualCancel">Cancelar</button>
+        <button class="edit-modal-btn save" id="btnManualSave">Salvar</button>
       </div>
     </div>
   </div>
