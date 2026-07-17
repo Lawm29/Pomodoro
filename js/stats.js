@@ -710,6 +710,21 @@ const Stats = {
     input.addEventListener('input', showSuggestions);
     input.addEventListener('focus', () => { if (input.value.trim()) showSuggestions(); });
     input.addEventListener('blur', () => setTimeout(hideSuggestions, 150));
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const val = input.value.trim().toLowerCase();
+        if (val && !segmentsArray[segIndex].tags.includes(val)) {
+          segmentsArray[segIndex].tags.push(val);
+          onAddCallback();
+        }
+        input.value = '';
+        hideSuggestions();
+      }
+      if (e.key === 'Escape') {
+        hideSuggestions();
+      }
+    });
   },
 
   async onManualTagInput() {
