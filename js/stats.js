@@ -716,6 +716,10 @@ const Stats = {
         const val = input.value.trim().toLowerCase();
         if (val && !segmentsArray[segIndex].tags.includes(val)) {
           segmentsArray[segIndex].tags.push(val);
+          if (this.cachedAllTagNames && !this.cachedAllTagNames.includes(val)) {
+            this.cachedAllTagNames.push(val);
+            this.cachedAllTagNames.sort();
+          }
           onAddCallback();
         }
         input.value = '';
