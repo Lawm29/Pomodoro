@@ -217,7 +217,8 @@ const Timer = {
         (this.mode === 'focus' ? 'focus' : this.mode === 'chronometer' ? 'chronometer' : 'break');
 
       if (this.mode === 'chronometer') {
-        this.elements.sessionCount.style.display = 'none';
+        this.elements.sessionCount.style.display = '';
+        this.elements.sessionCount.textContent = `${this.sessionCount + 1} / ${this.totalSessions}`;
       } else {
         this.elements.sessionCount.style.display = '';
         this.elements.sessionCount.textContent = `${this.sessionCount + 1} / ${this.totalSessions}`;
@@ -497,7 +498,6 @@ const Timer = {
       this.elements.typeLabel.className = 'session-type chronometer';
       this.elements.progress.classList.remove('break-mode');
       this.elements.progress.style.display = 'none';
-      this.elements.sessionCount.style.display = 'none';
       if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
     } else if (this.mode === 'shortBreak') {
       this.duration = this.shortBreakDuration;
@@ -523,6 +523,16 @@ const Timer = {
     this.updateDisplay();
     this.updateProgress();
     this.updateEndTagBtn();
+
+    if (this.btnModeFocus && this.btnModeChrono) {
+      if (this.mode === 'chronometer') {
+        this.btnModeChrono.classList.add('active');
+        this.btnModeFocus.classList.remove('active');
+      } else {
+        this.btnModeFocus.classList.add('active');
+        this.btnModeChrono.classList.remove('active');
+      }
+    }
   },
 
   togglePlay() {
@@ -703,14 +713,13 @@ const Timer = {
         this.startNext('shortBreak');
       }
     } else if (this.mode === 'chronometer') {
-      this.currentTags = [];
-      this.tagSegments = [];
-      this.activeSegment = null;
-      this.updateEndTagBtn();
-      if (typeof Tags !== 'undefined') Tags.clearTags();
-      this.start('focus');
-      this.btnModeFocus.classList.add('active');
-      this.btnModeChrono.classList.remove('active');
+      this.sessionCount++;
+      if (this.sessionCount >= this.totalSessions) {
+        this.sessionCount = 0;
+        this.startNext('longBreak');
+      } else {
+        this.startNext('shortBreak');
+      }
     } else {
       this.startNext('focus');
     }
