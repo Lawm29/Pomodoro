@@ -32,6 +32,11 @@
           <span id="sessionCount" class="session-count">1 / 4</span>
         </div>
 
+        <div class="mode-switcher">
+          <button class="mode-btn active" id="btnModeFocus">⏱ Pomodoro</button>
+          <button class="mode-btn" id="btnModeChrono">⏱ Cronômetro</button>
+        </div>
+
         <div class="timer-circle-wrapper">
           <svg class="timer-svg" viewBox="0 0 200 200">
             <circle class="timer-bg" cx="100" cy="100" r="90" />
@@ -236,6 +241,10 @@
           <label class="manual-type-option">
             <input type="radio" name="manualType" value="focus" checked>
             <span class="manual-type-label focus">Foco</span>
+          </label>
+          <label class="manual-type-option">
+            <input type="radio" name="manualType" value="chronometer">
+            <span class="manual-type-label chronometer">Cronômetro</span>
           </label>
           <label class="manual-type-option">
             <input type="radio" name="manualType" value="shortBreak">

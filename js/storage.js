@@ -133,7 +133,7 @@ const Storage = {
       const tagTime = {};
       snapshot.docs.forEach(doc => {
         const data = doc.data();
-        if (data.type === 'focus') {
+        if (data.type === 'focus' || data.type === 'chronometer') {
           if (data.tagSegments && data.tagSegments.length > 0) {
             data.tagSegments.forEach(seg => {
               const dur = (seg.end || 0) - (seg.start || 0);

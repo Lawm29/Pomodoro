@@ -36,6 +36,41 @@
   font-size: 0.9rem;
 }
 
+.session-type.chronometer {
+  background: rgba(156, 136, 255, 0.15);
+  color: #9c88ff;
+  border: 1px solid #9c88ff;
+}
+
+/* Mode switcher */
+.mode-switcher {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+}
+
+.mode-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.mode-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.mode-btn.active {
+  background: var(--accent-focus);
+  color: #fff;
+  border-color: var(--accent-focus);
+}
+
 /* Timer circle */
 .timer-circle-wrapper {
   position: relative;

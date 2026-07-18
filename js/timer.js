@@ -37,6 +37,20 @@ const Timer = {
     this.elements.reset.addEventListener('click', () => this.reset());
     this.elements.skip.addEventListener('click', () => this.skip());
 
+    // Mode switcher
+    this.btnModeFocus = document.getElementById('btnModeFocus');
+    this.btnModeChrono = document.getElementById('btnModeChrono');
+    this.btnModeFocus.addEventListener('click', () => {
+      this.start('focus');
+      this.btnModeFocus.classList.add('active');
+      this.btnModeChrono.classList.remove('active');
+    });
+    this.btnModeChrono.addEventListener('click', () => {
+      this.start('chronometer');
+      this.btnModeChrono.classList.add('active');
+      this.btnModeFocus.classList.remove('active');
+    });
+
     // Editable display - click to edit time
     this.elements.timerDisplay.addEventListener('click', (e) => {
       if (!this.isRunning && !this.countUp && this.remaining === this.duration) {
@@ -197,9 +211,18 @@ const Timer = {
 
       this.elements.typeLabel.textContent =
         this.mode === 'focus' ? 'Foco' :
+        this.mode === 'chronometer' ? 'Cronômetro' :
         this.mode === 'shortBreak' ? 'Pausa Curta' : 'Pausa Longa';
-      this.elements.typeLabel.className = 'session-type ' + (this.mode === 'focus' ? 'focus' : 'break');
-      this.elements.sessionCount.textContent = `${this.sessionCount + 1} / ${this.totalSessions}`;
+      this.elements.typeLabel.className = 'session-type ' +
+        (this.mode === 'focus' ? 'focus' : this.mode === 'chronometer' ? 'chronometer' : 'break');
+
+      if (this.mode === 'chronometer') {
+        this.elements.sessionCount.style.display = 'none';
+      } else {
+        this.elements.sessionCount.style.display = '';
+        this.elements.sessionCount.textContent = `${this.sessionCount + 1} / ${this.totalSessions}`;
+      }
+
       this.elements.playPause.textContent = '⏸';
       this.elements.wrapper.classList.remove('paused');
       this.elements.display.classList.remove('paused');
@@ -208,10 +231,25 @@ const Timer = {
         this.elements.progress.classList.remove('break-mode');
         this.elements.progress.style.display = '';
         if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Pular';
+      } else if (this.mode === 'chronometer') {
+        this.elements.progress.classList.remove('break-mode');
+        this.elements.progress.style.display = 'none';
+        if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
       } else {
         this.elements.progress.classList.add('break-mode');
         this.elements.progress.style.display = 'none';
         if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
+      }
+
+      // Update mode buttons
+      if (this.btnModeFocus && this.btnModeChrono) {
+        if (this.mode === 'chronometer') {
+          this.btnModeChrono.classList.add('active');
+          this.btnModeFocus.classList.remove('active');
+        } else {
+          this.btnModeFocus.classList.add('active');
+          this.btnModeChrono.classList.remove('active');
+        }
       }
 
       this.updateDisplay();
@@ -323,7 +361,7 @@ const Timer = {
   },
 
   startTag(tagName) {
-    if (!tagName || this.mode !== 'focus') return;
+    if (!tagName || this.mode === 'shortBreak' || this.mode === 'longBreak') return;
 
     const elapsed = this.getElapsed();
 
@@ -450,7 +488,17 @@ const Timer = {
       this.elements.typeLabel.className = 'session-type focus';
       this.elements.progress.classList.remove('break-mode');
       this.elements.progress.style.display = '';
+      this.elements.sessionCount.style.display = '';
       if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Pular';
+    } else if (this.mode === 'chronometer') {
+      this.duration = Infinity;
+      this.remaining = 0;
+      this.elements.typeLabel.textContent = 'Cronômetro';
+      this.elements.typeLabel.className = 'session-type chronometer';
+      this.elements.progress.classList.remove('break-mode');
+      this.elements.progress.style.display = 'none';
+      this.elements.sessionCount.style.display = 'none';
+      if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
     } else if (this.mode === 'shortBreak') {
       this.duration = this.shortBreakDuration;
       this.remaining = 0;
@@ -458,6 +506,7 @@ const Timer = {
       this.elements.typeLabel.className = 'session-type break';
       this.elements.progress.classList.add('break-mode');
       this.elements.progress.style.display = 'none';
+      this.elements.sessionCount.style.display = '';
       if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
     } else {
       this.duration = this.longBreakDuration;
@@ -466,6 +515,7 @@ const Timer = {
       this.elements.typeLabel.className = 'session-type break';
       this.elements.progress.classList.add('break-mode');
       this.elements.progress.style.display = 'none';
+      this.elements.sessionCount.style.display = '';
       if (this.elements.skipLabel) this.elements.skipLabel.textContent = 'Finalizar';
     }
 
@@ -627,7 +677,7 @@ const Timer = {
     const completedSession = {
       type: this.mode,
       duration: actualDuration,
-      plannedDuration: this.duration,
+      plannedDuration: this.duration === Infinity ? actualDuration : this.duration,
       completedAt: new Date().toISOString(),
       tags: this.getAllTags(),
       tagSegments: this.tagSegments.length > 0 ? [...this.tagSegments] : undefined
@@ -652,6 +702,15 @@ const Timer = {
       } else {
         this.startNext('shortBreak');
       }
+    } else if (this.mode === 'chronometer') {
+      this.currentTags = [];
+      this.tagSegments = [];
+      this.activeSegment = null;
+      this.updateEndTagBtn();
+      if (typeof Tags !== 'undefined') Tags.clearTags();
+      this.start('focus');
+      this.btnModeFocus.classList.add('active');
+      this.btnModeChrono.classList.remove('active');
     } else {
       this.startNext('focus');
     }

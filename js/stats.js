@@ -160,8 +160,8 @@ const Stats = {
   },
 
   render(sessions) {
-    const focusSessions = sessions.filter(s => s.type === 'focus');
-    const breakSessions = sessions.filter(s => s.type !== 'focus');
+    const focusSessions = sessions.filter(s => s.type === 'focus' || s.type === 'chronometer');
+    const breakSessions = sessions.filter(s => s.type !== 'focus' && s.type !== 'chronometer');
 
     const totalFocus = focusSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
     const totalBreak = breakSessions.reduce((sum, s) => sum + (s.duration || 0), 0);
@@ -254,6 +254,7 @@ const Stats = {
     const timeStr = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     const dateStr = date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
     const typeLabel = s.type === 'focus' ? 'Foco' :
+                      s.type === 'chronometer' ? 'Cronômetro' :
                       s.type === 'shortBreak' ? 'Pausa Curta' : 'Pausa Longa';
     const tagsHtml = (s.tags || []).map(t =>
       `<span class="history-tag">${this.escapeHtml(t)}</span>`

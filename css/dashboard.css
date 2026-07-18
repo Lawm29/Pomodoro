@@ -276,6 +276,10 @@
   background: var(--accent-focus);
 }
 
+.history-type.chronometer {
+  background: #9c88ff;
+}
+
 .history-type.break {
   background: var(--accent-break);
 }
@@ -678,6 +682,11 @@
 .manual-type-option input[type="radio"]:checked + .manual-type-label.break {
   background: var(--accent-break);
   border-color: var(--accent-break);
+}
+
+.manual-type-option input[type="radio"]:checked + .manual-type-label.chronometer {
+  background: #9c88ff;
+  border-color: #9c88ff;
 }
 
 /* Responsive: stack top row on mobile */
