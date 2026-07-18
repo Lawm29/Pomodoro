@@ -342,6 +342,8 @@ const Timer = {
     if (!this.isRunning) {
       if (this.mode === 'focus') {
         this.duration = this.focusDuration;
+      } else if (this.mode === 'chronometer') {
+        this.duration = Infinity;
       } else if (this.mode === 'shortBreak') {
         this.duration = this.shortBreakDuration;
       } else {

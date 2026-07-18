@@ -16,8 +16,10 @@ const App = {
     Theme.apply(settings.theme || 'dark');
     Timer.configure(settings);
 
-    // Start timer with focus mode
-    Timer.start('focus');
+    // Start timer with focus mode only if no timer was restored
+    if (!Timer.isRunning) {
+      Timer.start('focus');
+    }
 
     // Load stats
     Stats.load().then(() => Stats.attachEditListeners());
