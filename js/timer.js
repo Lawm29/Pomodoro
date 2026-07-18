@@ -172,7 +172,7 @@ const Timer = {
       const elapsed = Math.floor((Date.now() - state.startTimestamp) / 1000);
 
       this.mode = state.mode;
-      this.duration = state.duration;
+      this.duration = state.mode === 'chronometer' ? Infinity : state.duration;
       this.countUp = state.countUp;
       this.sessionCount = state.sessionCount || 0;
       this.tagSegments = state.tagSegments || [];
